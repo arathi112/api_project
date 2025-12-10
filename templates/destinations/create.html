@@ -1,0 +1,94 @@
+{% extends 'destinations/base.html' %}
+
+{% block content %}
+    <h2>Add New Tourist Destination</h2>
+    
+    <div class="card">
+        <form id="destination-form" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="place_name">Place Name:</label>
+                <input type="text" id="place_name" name="place_name" required>
+                <div id="place_name_error" class="error"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="weather">Weather:</label>
+                <input type="text" id="weather" name="weather" required>
+                <div id="weather_error" class="error"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="state">State:</label>
+                <input type="text" id="state" name="state" required>
+                <div id="state_error" class="error"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="district">District:</label>
+                <input type="text" id="district" name="district" required>
+                <div id="district_error" class="error"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="description">Description:</label>
+                <textarea id="description" name="description" rows="5" required></textarea>
+                <div id="description_error" class="error"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="images">Images:</label>
+                <input type="file" id="images" name="images" multiple accept="image/*">
+                <div id="images_error" class="error"></div>
+            </div>
+            
+            <button type="submit" class="btn">Save Destination</button>
+            <a href="/" class="btn" style="background: #ccc;">Cancel</a>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('destination-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Clear previous errors
+            document.querySelectorAll('.error').forEach(el => el.textContent = '');
+            
+            const formData = new FormData();
+            formData.append('place_name', document.getElementById('place_name').value);
+            formData.append('weather', document.getElementById('weather').value);
+            formData.append('state', document.getElementById('state').value);
+            formData.append('district', document.getElementById('district').value);
+            formData.append('description', document.getElementById('description').value);
+            
+            const imageFiles = document.getElementById('images').files;
+            for (let i = 0; i < imageFiles.length; i++) {
+                formData.append('uploaded_images', imageFiles[i]);
+            }
+            
+            fetch('/api/destinations/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': csrftoken
+                }
+            })
+            .then(response => response.json().then(data => {
+                if (response.ok) {
+                    window.location.href = /${data.id}/;
+                } else {
+                    // Display validation errors
+                    for (const field in data) {
+                        const errorElement = document.getElementById(${field}_error);
+                        if (errorElement) {
+                            errorElement.textContent = data[field].join(' ');
+                        }
+                    }
+                }
+            }))
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            });
+        });
+    </script>
+{% endblock %}

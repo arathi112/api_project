@@ -1,0 +1,121 @@
+{% extends 'destinations/base.html' %}
+
+{% block content %}
+<h2>Tourist Destinations</h2>
+
+<!-- ലോഡിംഗ് സ്റ്റേറ്റ് -->
+<div id="loading" style="display:none;">Loading...</div>
+
+<!-- ഡാറ്റ ലിസ്റ്റ് കാണിക്കുന്ന ഡിവി -->
+<div id="destinations-list"></div>
+
+
+<div id="error-message" class="error" style="display:none;"></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('destinations-list');
+    const loading = document.getElementById('loading');
+    const errorDiv = document.getElementById('error-message');
+
+
+    loading.style.display = 'block';
+    container.innerHTML = '';
+    errorDiv.style.display = 'none';
+
+    fetch('/api/destinations/')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(HTTP error! status: ${response.status});
+            }
+            return response.json();
+        })
+        .then(data => {
+            // ലോഡിംഗ് ഹൈഡ്
+            loading.style.display = 'none';
+
+            if (data.length === 0) {
+                container.innerHTML = '<p>No destinations found. Add your first destination!</p>';
+                return;
+            }
+
+            // ഡാറ്റ ഡിസ്പ്ലേ ചെയ്യുക
+            let html = '';
+            data.forEach(destination => {
+                const firstImage = destination.images?.length > 0
+                    ? <img src="${destination.images[0].image}" alt="${destination.place_name}" class="destination-image">
+                    : '<div class="no-image">No Image</div>';
+
+                html += `
+                <div class="destination-card">
+                    ${firstImage}
+                    <div class="destination-info">
+                        <h3>${destination.place_name}</h3>
+                        <p><i class="fas fa-map-marker-alt"></i> ${destination.district}, ${destination.state}</p>
+                        <p><i class="fas fa-cloud"></i> ${destination.weather}</p>
+                        <p>${destination.description.substring(0, 100)}${destination.description.length > 100 ? '...' : ''}</p>
+                        <a href="/${destination.id}/" class="btn">View Details</a>
+                    </div>
+                </div>
+                `;
+            });
+            container.innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            loading.style.display = 'none';
+            errorDiv.textContent = 'Failed to load destinations. Please try again later.';
+            errorDiv.style.display = 'block';
+        });
+});
+</script>
+
+<style>
+.destination-card {
+    display: flex;
+    margin: 20px 0;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.destination-image {
+    width: 300px;
+    height: 200px;
+    object-fit: cover;
+}
+
+.no-image {
+    width: 300px;
+    height: 200px;
+    background: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+}
+
+.destination-info {
+    padding: 15px;
+    flex: 1;
+}
+
+.btn {
+    display: inline-block;
+    background: #4CAF50;
+    color: white;
+    padding: 8px 15px;
+    text-decoration: none;
+    border-radius: 4px;
+    margin-top: 10px;
+}
+
+.error {
+    color: red;
+    padding: 10px;
+    background: #ffeeee;
+    border-radius: 4px;
+    margin: 20px 0;
+}
+</style>
+{% endblock %}
